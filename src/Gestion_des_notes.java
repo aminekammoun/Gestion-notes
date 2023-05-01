@@ -14,13 +14,18 @@ public class Gestion_des_notes extends javax.swing.JFrame {
     private javax.swing.JButton jButton4;//Actualiser
     private javax.swing.JButton jButton5;//Modifier
     private javax.swing.JButton jButton6;//Moyenne
+    private javax.swing.JButton jButton7;//maxnote
+    private javax.swing.JButton jButton8;//minnote
     private javax.swing.JLabel jLabel1;//Nom
     private javax.swing.JLabel jLabel2;//id
     private javax.swing.JLabel jLabel3;//Prenom
     private javax.swing.JLabel jLabel4;//Note
+    private javax.swing.JLabel jLabel42;//Note
     private javax.swing.JLabel jLabel5;//Absence
     private javax.swing.JLabel jLabel6;//gestion des notes
     private javax.swing.JLabel jLabel7;//for Wallpaper
+    private javax.swing.JLabel jLabel8;//for Wallpaper
+    private javax.swing.JLabel jLabel9;//for Wallpaper
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenuBar jMenuBar1;
@@ -30,15 +35,22 @@ public class Gestion_des_notes extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItem4;
     private javax.swing.JMenuItem jMenuItem5;
     private javax.swing.JMenuItem jMenuItem6;
+    private javax.swing.JMenuItem jMenuItem7;
+    
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JTable tble;
     // private javax.swing.JComboBox txtbr;
     private javax.swing.JTextField txtid;
     private javax.swing.JTextField txtno;
-    private javax.swing.JTextField txtnot;
+    private javax.swing.JTextField txtnot1;
+    private javax.swing.JTextField txtnot2;
+
     private javax.swing.JTextField txtpr;
     private javax.swing.JTextField txtre;
     private javax.swing.JTextField txtmoy;
+    private javax.swing.JTextField txtmoyi;
+    private javax.swing.JTextField txtmax;
+    private javax.swing.JTextField txtmin;
     private javax.swing.JTextField txtabs;
     Connecter conn = new Connecter();
     Statement stm;
@@ -60,7 +72,7 @@ public class Gestion_des_notes extends javax.swing.JFrame {
                             isSelected, hasFocus, row, column);
                     
                     // Colorer en rouge uniquement les lignes qui contiennent un nombre d'absences supérieur à 3
-                    int absence = Integer.parseInt(table.getValueAt(row, 4).toString());
+                    int absence = Integer.parseInt(table.getValueAt(row, 5).toString());
                     if (absence > 2) {
                         c.setBackground(Color.RED);
                     } else {
@@ -73,7 +85,7 @@ public class Gestion_des_notes extends javax.swing.JFrame {
             
             while (Rs.next()) {
                 model.addRow(new Object[] { Rs.getString("id"), Rs.getString("nom"), Rs.getString("Prenom"),
-                        Rs.getString("note"), Rs.getString("absence") });
+                        Rs.getString("note1"),Rs.getString("note2"), Rs.getString("absence"),Rs.getDouble("moyenne") });
             }
             // Appliquer le rendu personnalisé à chaque colonne de votre tableau
             tble.setModel(model);
@@ -115,18 +127,22 @@ public class Gestion_des_notes extends javax.swing.JFrame {
         String nom = txtno.getText();
         String prenom = txtpr.getText();
         // String branche = txtbr.getSelectedItem().toString();
-        String note = txtnot.getText();
+        String note1 = txtnot1.getText();
+        String note2 = txtnot2.getText();
         String absence = txtabs.getText();
-        String requete = "insert into student(id,nom,prenom,note,absence)VALUES('" +
-                id + "','" + nom + "','" + prenom + "','"  + note + "','"  + absence + "')";
+        Double moyenne = (Double.parseDouble(note1) +2* Double.parseDouble(note2)) / 3.0;
+        String requete = "insert into student(id,nom,prenom,note1,note2,absence,moyenne)VALUES('" +
+                id + "','" + nom + "','" + prenom + "','"  + note1 +"','"  + note2 +"','"  + absence +"','"  + moyenne+ "')";
         try {
             stm.executeUpdate(requete);
-            JOptionPane.showMessageDialog(null, "l'etudiant est bien ajouter");
+            JOptionPane.showMessageDialog(null, "l'etudiant est bien ajouté");
             txtno.setText("");
             txtpr.setText("");
             // txtbr.setSelectedItem(2);
-            txtnot.setText("");
+            txtnot1.setText("");
+            txtnot2.setText("");
             txtabs.setText("");
+            txtmoyi.setText("");
             afficher();
 
         } catch (Exception ex) {
@@ -146,7 +162,7 @@ public class Gestion_des_notes extends javax.swing.JFrame {
                 // model.addRow(new Object[] { Rs.getString("id"), Rs.getString("nom"), Rs.getString("Prenom"),
                 //         Rs.getString("note"), Rs.getString("absence") });
                 nbr+=1;
-                moy += Rs.getFloat("note");
+                moy += Rs.getFloat("moyenne");
             }
             moy = moy / nbr;
 txtmoy.setText(String.format("%.2f", moy));
@@ -155,7 +171,35 @@ txtmoy.setText(String.format("%.2f", moy));
         }
     }
 
+    private void jButton7ActionPerformed(java.awt.event.ActionEvent evt) {
+    	try {
+    	    stm = conn.obtenirconnexion().createStatement();
+    	    ResultSet Rs = stm.executeQuery("SELECT MAX(moyenne"
+    	    		+ ") AS max_moyenne FROM student");
+    	    if (Rs.next()) {    
+    	        double maxmoyenne = Rs.getDouble("max_moyenne");
+    	        txtmax.setText(String.format("%.2f", maxmoyenne));
+    	    }
+    	} catch (Exception e) {
+    	    System.err.println(e);
+    	}
 
+    }
+    
+    private void jButton8ActionPerformed(java.awt.event.ActionEvent evt) {
+    	try {
+    	    stm = conn.obtenirconnexion().createStatement();
+    	    ResultSet Rs = stm.executeQuery("SELECT MIN(moyenne) AS min_moyenne FROM student");
+    	    if (Rs.next()) {    
+    	        double minmoyenne = Rs.getDouble("min_moyenne");
+    	        txtmin.setText(String.format("%.2f", minmoyenne));
+    	    }
+    	} catch (Exception e) {
+    	    System.err.println(e);
+    	}
+
+    }
+    	   
     //cette fonction deplace les données de la résultat dans les textField
     private void deplace(int i) {
         try {
@@ -163,8 +207,10 @@ txtmoy.setText(String.format("%.2f", moy));
             txtno.setText(model.getValueAt(i, 1).toString());
             txtpr.setText(model.getValueAt(i, 2).toString());
             // txtbr.setSelectedItem(model.getValueAt(i, 3).toString());
-            txtnot.setText(model.getValueAt(i, 3).toString());
-            txtabs.setText(model.getValueAt(i, 4).toString());
+            txtnot1.setText(model.getValueAt(i, 3).toString());
+            txtnot2.setText(model.getValueAt(i, 4).toString());
+            txtabs.setText(model.getValueAt(i, 5).toString());
+            txtmoyi.setText(model.getValueAt(i, 6).toString());
         } catch (Exception e) {
             System.err.println(e);
             JOptionPane.showMessageDialog(null, "erreur de deplacement" + e.getLocalizedMessage());
@@ -181,7 +227,7 @@ txtmoy.setText(String.format("%.2f", moy));
             }
             while (Rs.next()) {
 
-                Object[] etudient = { Rs.getInt(1), Rs.getString(2), Rs.getString(3), Rs.getString(4), Rs.getInt(5) };
+                Object[] etudient = { Rs.getInt(1), Rs.getString(2), Rs.getString(3), Rs.getString(4), Rs.getString(5),Rs.getInt(6),Rs.getDouble(7) };
                 model.addRow(etudient);
             }
             if (model.getRowCount() == 0) {
@@ -212,7 +258,7 @@ txtmoy.setText(String.format("%.2f", moy));
                     JOptionPane.YES_NO_OPTION) == JOptionPane.OK_OPTION) {
 
                 stm.executeUpdate("UPDATE student SET nom='" + txtno.getText() + "',prenom='" + txtpr.getText() +
-                        "',note='" + txtnot.getText() + "',absence='" + txtabs.getText() +
+                        "',note1='" + txtnot1.getText()  +"',note2='" + txtnot2.getText()+ "',absence='" + txtabs.getText() +
                         "' WHERE id= " + txtid.getText());
                 afficher();
 
@@ -246,8 +292,10 @@ txtmoy.setText(String.format("%.2f", moy));
         model.addColumn("id");
         model.addColumn("nom");
         model.addColumn("prenom");
-        model.addColumn("note");
+        model.addColumn("note1");
+        model.addColumn("note2");
         model.addColumn("absence");
+        model.addColumn("moyenne etudiant");
         afficher();
     }
 
@@ -258,9 +306,16 @@ txtmoy.setText(String.format("%.2f", moy));
         jButton4 = new javax.swing.JButton();//Actualiser
         jButton5 = new javax.swing.JButton();//Modifier
         jButton6 = new javax.swing.JButton();//Rien
+        jButton7 = new javax.swing.JButton();//Rien
+        jButton8 = new javax.swing.JButton();//Rien
         txtre = new javax.swing.JTextField();
         txtmoy = new javax.swing.JTextField();
+        txtmoyi = new javax.swing.JTextField();
+        txtmax = new javax.swing.JTextField();
+        txtmin = new javax.swing.JTextField();
         jLabel6 = new javax.swing.JLabel();
+        jLabel8 = new javax.swing.JLabel();
+        jLabel9 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         tble = new javax.swing.JTable();
         jLabel2 = new javax.swing.JLabel();//id
@@ -268,7 +323,9 @@ txtmoy.setText(String.format("%.2f", moy));
         jLabel3 = new javax.swing.JLabel();//Prenom
         jLabel4 = new javax.swing.JLabel();//Branche
         jLabel5 = new javax.swing.JLabel();//Note
-        txtnot = new javax.swing.JTextField();
+        jLabel42 = new javax.swing.JLabel();//Note
+        txtnot1 = new javax.swing.JTextField();
+        txtnot2 = new javax.swing.JTextField();
         txtabs = new javax.swing.JTextField();
         // txtbr = new javax.swing.JComboBox();
         txtpr = new javax.swing.JTextField();
@@ -284,6 +341,7 @@ txtmoy.setText(String.format("%.2f", moy));
         jMenuItem5 = new javax.swing.JMenuItem();
         jMenu2 = new javax.swing.JMenu();
         jMenuItem6 = new javax.swing.JMenuItem();
+        jMenuItem7 = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setPreferredSize(new java.awt.Dimension(770, 530));
@@ -319,9 +377,14 @@ txtmoy.setText(String.format("%.2f", moy));
                 jButton3ActionPerformed(evt);
             }
         });
+        
         getContentPane().add(jButton3);
-        jButton3.setBounds(380, 380, 150, 40);
-
+        jButton3.setBounds(40, 450, 140, 30);
+        txtre.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        txtre.addKeyListener(new java.awt.event.KeyAdapter() {
+        });
+        getContentPane().add(txtre);
+        txtre.setBounds(190, 450, 130, 30);
         jButton4.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         jButton4.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icone/modifier.png"))); // NOI18N
         jButton4.setText("actualiser");
@@ -360,24 +423,111 @@ txtmoy.setText(String.format("%.2f", moy));
             }
         });
         getContentPane().add(jButton6);
-        jButton6.setBounds(40, 450, 130, 40);
+        jButton6.setBounds(380, 450, 130, 40);
 
         txtmoy.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         txtmoy.addKeyListener(new java.awt.event.KeyAdapter() {
         });
         getContentPane().add(txtmoy);
-        txtmoy.setBounds(180, 457, 130, 30);
+        txtmoy.setBounds(560, 450, 130, 40);
 
-        txtre.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        txtre.addKeyListener(new java.awt.event.KeyAdapter() {
-        });
-        getContentPane().add(txtre);
-        txtre.setBounds(560, 380, 130, 30);
+       
 
         jLabel6.setFont(new java.awt.Font("Times New Roman", 1, 48)); // NOI18N
         jLabel6.setText("gestion des notes");
         getContentPane().add(jLabel6);
-        jLabel6.setBounds(260, 30, 350, 70);
+        jLabel6.setBounds(560, 450, 130, 40);
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+
+        jButton7.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        // jButton6.setIcon(new
+        // javax.swing.ImageIcon(getClass().getResource("/icone/nouveau.png"))); //
+        // NOI18N
+        jButton7.setText("max notes");
+        // jButton6.addMouseListener(new java.awt.event.MouseAdapter() {
+        //     public void mouseClicked(java.awt.event.MouseEvent evt) {
+        //         jButton6MouseClicked(evt);
+        //     }
+        // });
+        jButton7.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton7ActionPerformed(evt);
+            }
+        });
+        getContentPane().add(jButton7);
+ 
+        jButton7.setBounds(380, 400, 130, 40);
+        
+        txtmax.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        txtmax.addKeyListener(new java.awt.event.KeyAdapter() {
+        });
+        getContentPane().add(txtmax);
+        txtmax.setBounds (560, 400, 130, 40);
+        
+        
+        
+        
+        jButton8.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
+        // jButton6.setIcon(new
+        // javax.swing.ImageIcon(getClass().getResource("/icone/nouveau.png"))); //
+        // NOI18N
+        jButton8.setText("min notes");
+        // jButton6.addMouseListener(new java.awt.event.MouseAdapter() {
+        //     public void mouseClicked(java.awt.event.MouseEvent evt) {
+        //         jButton6MouseClicked(evt);
+        //     }
+        // });
+        jButton8.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton8ActionPerformed(evt);
+            }
+        });
+        getContentPane().add(jButton8);
+ 
+        jButton8.setBounds(380, 350, 130, 40);
+        
+        txtmin.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        txtmin.addKeyListener(new java.awt.event.KeyAdapter() {
+        });
+        getContentPane().add(txtmin);
+        txtmin.setBounds(560, 350, 130, 40);
+        
+        
+        
+        
+
+        
+
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
 
         tble.setModel(new javax.swing.table.DefaultTableModel(
                 new Object[][] {
@@ -414,25 +564,36 @@ txtmoy.setText(String.format("%.2f", moy));
         jLabel3.setBounds(40, 190, 53, 17);
 
         jLabel4.setFont(new java.awt.Font("Times New Roman", 1, 14)); // NOI18N
-        jLabel4.setText("Note :");
+        jLabel4.setText("Note1 :");
         getContentPane().add(jLabel4);
-        jLabel4.setBounds(40, 240, 60, 17);
-
+        jLabel4.setBounds(40, 230, 53, 17);
+        
+        jLabel42.setFont(new java.awt.Font("Times New Roman", 1, 14)); // NOI18N
+        jLabel42.setText("Note2 :");
+        getContentPane().add(jLabel42);
+        jLabel42.setBounds(40, 270, 53, 17);
+        
         jLabel5.setFont(new java.awt.Font("Times New Roman", 1, 14)); // NOI18N
-        jLabel5.setText("Absence  :");
+        jLabel5.setText("Absence:");
         getContentPane().add(jLabel5);
-        jLabel5.setBounds(50, 290, 40, 17);
+        jLabel5.setBounds(40, 310, 80, 17);
 
-        txtnot.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        getContentPane().add(txtnot);
-        txtnot.setBounds(170, 240, 100, 23);
-
+        txtnot1.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        getContentPane().add(txtnot1);
+        txtnot1.setBounds(170, 230, 100, 23);
+        txtnot2.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        getContentPane().add(txtnot2);
+        txtnot2.setBounds(170, 270, 100, 23);
+        
+        
+        
+        
         // txtbr.setModel(new javax.swing.DefaultComboBoxModel(
         //         new String[] { "Réseau", "SGBD", "Embarqué", "R.O", "Gestion", "GL2", "Java Avancé" }));
         // getContentPane().add(txtbr);
         txtabs.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         getContentPane().add(txtabs);
-        txtabs.setBounds(170, 290, 100, 22);
+        txtabs.setBounds(170, 310, 100, 22);
 
         txtpr.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
         getContentPane().add(txtpr);
@@ -449,7 +610,9 @@ txtmoy.setText(String.format("%.2f", moy));
         jLabel7.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icone/wallpaper.jpg"))); // NOI18N
         getContentPane().add(jLabel7);
         jLabel7.setBounds(0, 0, 760, 500);
-
+        jLabel8.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icone/wallpaper.jpg"))); // NOI18N
+        getContentPane().add(jLabel7);
+        jLabel8.setBounds(0, 0, 760, 500);
         jMenu1.setText("File");
 
         jMenuItem1.setAccelerator(
@@ -480,6 +643,7 @@ txtmoy.setText(String.format("%.2f", moy));
 
         jMenu1.add(jMenuItem5);
 
+    
         jMenuBar1.add(jMenu1);
 
         jMenu2.setText("Edit");

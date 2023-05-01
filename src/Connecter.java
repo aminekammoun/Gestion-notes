@@ -18,7 +18,7 @@ public class Connecter {
     try{
     	String url = "jdbc:mysql://localhost/gestion";
     	String user = "root";
-    	String password = "Manager21c";
+    	String password = "Medamine1.";
     	conn = DriverManager.getConnection(url, user, password);
     }catch(SQLException e){System.err.println(e);}
     }
